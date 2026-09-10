@@ -330,8 +330,6 @@ class LightCurve():
             Format x-axis as dates. Default is True.
         zeroline : bool, optional
             Draw a zero line on the plot. Default is True.
-        incl_salt : bool, optional
-            Include SALT2 model in the plot. Default is True.
         which_model : str, optional
             SALT2 model specification. Default is None (uses default).
         autoscale_salt : bool, optional
@@ -400,13 +398,12 @@ class LightCurve():
             modeltime = t0 + np.linspace(-15,50,100)
         else:
             timerange = None
-            if incl_salt:
+            if saltmodel is not None:
                 warnings.warn("t0 in saltdata is NaN, cannot show the model")
             if as_phase:
                 warnings.warn("t0 in saltdata is NaN, as_phase not available")
                 as_phase = False
 
-            incl_salt = False
             saltmodel = None
             autoscale_salt = False
 

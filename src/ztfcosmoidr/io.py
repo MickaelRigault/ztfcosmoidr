@@ -36,7 +36,7 @@ def get_master_list(release="dr3"):
     """return the master list of ZTF objects"""
     return pandas.read_csv( os.path.join(IDR_PATH, release, "tables/object_lists/master_list.csv") ).set_index("ztfname")
 
-def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="02092025"):
+def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="20260423"):
     """Return the SALT data for a given release and parameters.
 
     Parameters
@@ -56,7 +56,7 @@ def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="0209202
         DataFrame containing the SALT parameters for the specified release
         and parameters.
     """
-    pathsalt_dir = os.path.join(IDR_PATH, release, "tables/object_lists")
+    pathsalt_dir = os.path.join(IDR_PATH, release, "tables/saltfit")
     basename = f"ztf{release}_{which}params_{bands}_{version}.csv"
     return pandas.read_csv(os.path.join(pathsalt_dir, basename)).set_index("ztfname")
 
@@ -119,6 +119,29 @@ def get_target_lightcurve(name, release="dr3", test_exist=True, load=True):
 # ============ #
 #   Spectra    #
 # ============ #
+def get_target_spectra(name, release="dr3"):
+    """Return the spectra for a given target name.
+
+    Parameters
+    ----------
+    name : str
+        Target name
+    release : str, optional
+        Release version (default is "dr3")
+
+    Returns
+    -------
+    list of Spectrum
+
+    """
+    specfile = get_spec_datafile(contains=name, release=release)
+    if len(specfile) == 0:
+        warnings.warn(f"No spectra found for {name}")
+        return []
+
+    from .spectrum import Spectrum
+    return [Spectrum.from_filename(specfile_, release=release) for specfile_ in specfile["basename"]]
+
 def parse_spectrum_file(filename):
     """Parse a spectrum file.
 
@@ -137,15 +160,29 @@ def parse_spectrum_file(filename):
     import re
     # Parse filename to extract metadata
     basename = os.path.basename(filename)
-    match = re.match(r"([^_]+)_([^_]+)_([^.]+)\.ascii", basename)
-
+    match = re.match(r"([^_]+)_([^_]+)_([^_]+)_([^.]+)\.DAT", basename)
+    # targetname, nthobs, type, instrument.
     if not match:
-        return "failed", 0, "failed"
+        return "failed", 0, 0, "failed"
         #raise ValueError(f"Filename does not match expected format: {basename}")
 
     return match.groups()
 
-def get_spec_datafile(release="dr3"):
+def fetch_specfile(filename, release="dr3", accept_input_file=True):
+    """Fetch the full path of a spectrum file from the IDR."""
+    # If this path exist, it sounds correct.
+    if os.path.exists(filename) and accept_input_file:
+        return filename
+
+    basename = os.path.basename(filename)
+    if release == "dr3":
+        filepath = os.path.join(IDR_PATH, release, "spectra", "standardised",  basename)
+    else:
+        filepath = os.path.join(IDR_PATH, release, "spectra", basename)
+
+    return filepath
+
+def get_spec_datafile(release="dr3", contains="*"):
     """Return the spectral data file.
 
     Returns
@@ -156,9 +193,19 @@ def get_spec_datafile(release="dr3"):
     """
     from glob import glob
 
-    path_to_spec = os.path.join(IDR_PATH, release, "spectra")
-    all_spectra = glob(os.path.join(path_to_spec, "*.ascii"))
+    path_to_spec = os.path.join(IDR_PATH, release, "spectra", "standardised")
+    all_spectra = glob(os.path.join(path_to_spec, f"{contains}*.DAT"))
     specdata = [parse_spectrum_file(filename) for filename in all_spectra]
-    specdata = pandas.DataFrame(specdata, columns=["ztfname", "mjd", "instrument"]).astype({"mjd": "float"})
+    specdata = pandas.DataFrame(specdata, columns=["ztfname", "nthobs", "date", "instrument"])
     specdata["basename"] = [os.path.basename(filename) for filename in all_spectra]
     return specdata
+
+# ============ #
+#   HOST       #
+# ============ #
+def get_target_hostcutoutpath(name, release="dr3"):
+    """Fetch the host cutout for a given target."""
+    if release == "dr3":
+        return os.path.join(IDR_PATH, release, "hosts/cutouts", f"{name}_hostcutout.jpg")
+    else:
+        raise NotImplementedError(f"Host cutout not available for release {release}")

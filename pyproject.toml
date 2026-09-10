@@ -3,7 +3,7 @@ requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ztfidr3"
+name = "ztfcosmoidr"
 dynamic = ["version"]
 description = "Simulating Transient in the sky and how to observe them"
 readme = "README.md"
@@ -31,7 +31,7 @@ tests = ["pytest", "pytest-doctestplus", "pytest-cov"]
 
 
 [project.urls]
-Homepage = "https://github.com/MickaelRigault/ztfidr3"
+Homepage = "https://github.com/MickaelRigault/ztfcosmoidr"
 
 [tool.setuptools]
 include-package-data = true
@@ -41,7 +41,7 @@ zip-safe = false
 where = ["src"]
 
 [tool.setuptools.package-data]
-ztfidr3 = ["config/*"]
+ztfcosmoidr = ["config/*"]
 
 [tool.sphinx]
 source-dir = "docs/"
@@ -49,7 +49,7 @@ build-dir = "docs/_build"
 all_files = true
 
 [tool.setuptools.dynamic]
-version = {attr = "ztfidr3.__version__"}
+version = {attr = "ztfcosmoidr.__version__"}
 
 
 [tool.ruff]
@@ -80,11 +80,11 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["ztfidr3"]
+source = ["ztfcosmoidr"]
 omit = ["tests/*"]
 
 [tool.coverage.paths]
-source = ["src/ztfidr3/", "*/site-packages/ztfidr3/"]
+source = ["src/ztfcosmoidr/", "*/site-packages/ztfcosmoidr/"]
 
 [tool.coverage.report]
 exclude_lines = [

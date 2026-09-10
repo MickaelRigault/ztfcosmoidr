@@ -47,6 +47,9 @@ class Sample():
         data = io.get_data(release=release)
         return cls(data)
 
+    # ================ #
+    #   Methods        #
+    # ================ #
     def get_target_lightcurve(self, name, as_dataframe=False):
         """
         Retrieve the lightcurve for a specific target.
@@ -78,7 +81,7 @@ class Sample():
             return data
 
         from .lightcurve import LightCurve
-        saltdata = io.get_target_saltdata(name, release=self.release)
+        saltdata = self.data.loc[name] # actually more than just salt data.
         return LightCurve(data=data, saltdata=saltdata)
 
     def get_target_spectra(self, name):
@@ -173,6 +176,27 @@ class Sample():
                 warnings.warn(f"Number of spectra ({len(spectra)}) does not match number of axes ({len(axes)})")
 
         return [spec.show(ax=ax_, **kwargs) for spec, ax_ in zip(spectra, axes)]
+
+    def show_target_hostcutout(self, name, ax=None, **kwargs):
+        """ Show the host cutout for a target.
+
+        Parameters
+        ----------
+        name : str
+            The name of the target.
+        ax : matplotlib.axes.Axes, optional
+            The axes object on which to plot the host cutout.
+            If None, a new figure and axes will be created (default is None).
+        **kwargs
+            Additional keyword arguments to pass to the host cutout plotting method.
+
+        Returns
+        -------
+        matplotlib.axes.Axes
+            The axes object containing the host cutout plot.
+        """
+        from .hosts import get_target_cutoutimg
+        return get_target_cutoutimg(name, ax=ax, release=self.release, **kwargs)
 
     # =============== #
     #   Properties    #
