@@ -50,6 +50,12 @@ class Sample():
     # ================ #
     #   Methods        #
     # ================ #
+    def get_missing_classication(self, max_redshift=0.065):
+        """ """
+        return self.typinglist[(~self.typinglist["in_DR2"]) &
+                                (self.typinglist["redshift"]<=max_redshift) &
+                                (~self.typinglist["only_1_spec_after_7d"])]
+
     def get_target_lightcurve(self, name, as_dataframe=False):
         """
         Retrieve the lightcurve for a specific target.
@@ -236,3 +242,18 @@ class Sample():
             DataFrame containing spectrum file metadata indexed by target name.
         """
         return self._specfile
+
+    @property
+    def typinglist(self):
+        """
+        Get the list of classifications for targets in the sample
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame containing the typing list for the sample.
+        """
+        if not hasattr(self, "_typinglist"):
+            self._typinglist = io.get_typing_table(release=self.release).loc[self.data.index]
+
+        return self._typinglist

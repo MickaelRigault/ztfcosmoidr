@@ -36,7 +36,7 @@ def get_master_list(release="dr3"):
     """return the master list of ZTF objects"""
     return pandas.read_csv( os.path.join(IDR_PATH, release, "tables/object_lists/master_list.csv") ).set_index("ztfname")
 
-def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="20260423"):
+def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version=""):
     """Return the SALT data for a given release and parameters.
 
     Parameters
@@ -57,7 +57,11 @@ def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="2026042
         and parameters.
     """
     pathsalt_dir = os.path.join(IDR_PATH, release, "tables/saltfit")
-    basename = f"ztf{release}_{which}params_{bands}_{version}.csv"
+    if version is not None and version != "":
+        version = f"_{version}"
+    else:
+        version = ""
+    basename = f"ztf{release}_{which}params_{bands}{version}.csv"
     return pandas.read_csv(os.path.join(pathsalt_dir, basename)).set_index("ztfname")
 
 def get_target_saltdata(name, which="salt2-T21", **kwargs):
@@ -115,6 +119,15 @@ def get_target_lightcurve(name, release="dr3", test_exist=True, load=True):
         return fullpath
 
     return pandas.read_csv(fullpath, sep='\s+', comment='#')
+
+# ============== #
+# Classification #
+# ============== #
+def get_typing_table(release="dr3"):
+    """ """
+    fullpath = os.path.join(IDR_PATH, release, "tables/.dataset_creation", f"type_list.csv")
+    typing_source = pandas.read_csv(fullpath, index_col=0).replace({"no": False, "yes": True})
+    return typing_source
 
 # ============ #
 #   Spectra    #
