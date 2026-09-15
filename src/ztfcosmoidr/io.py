@@ -56,10 +56,11 @@ def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version=""):
         and parameters.
     """
     pathsalt_dir = os.path.join(IDR_PATH, release, "tables/saltfit")
-    if version is None or version == "":
-        basename = f"ztf{release}_{which}params_{bands}.csv"
+    if version is not None and version != "":
+        version = f"_{version}"
     else:
-        basename = f"ztf{release}_{which}params_{bands}_{version}.csv"
+        version = ""
+    basename = f"ztf{release}_{which}params_{bands}{version}.csv"
     return pandas.read_csv(os.path.join(pathsalt_dir, basename)).set_index("ztfname")
 
 def get_target_saltdata(name, which="salt2-T21", **kwargs):
@@ -117,6 +118,15 @@ def get_target_lightcurve(name, release="dr3", test_exist=True, load=True):
         return fullpath
 
     return pandas.read_csv(fullpath, sep='\s+', comment='#')
+
+# ============== #
+# Classification #
+# ============== #
+def get_typing_table(release="dr3"):
+    """ """
+    fullpath = os.path.join(IDR_PATH, release, "tables/.dataset_creation", f"type_list.csv")
+    typing_source = pandas.read_csv(fullpath, index_col=0).replace({"no": False, "yes": True})
+    return typing_source
 
 # ============ #
 #   Spectra    #
