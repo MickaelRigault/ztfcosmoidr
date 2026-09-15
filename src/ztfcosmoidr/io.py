@@ -1,5 +1,4 @@
 """access ztf dr3 internal data-release"""
-
 import os
 import warnings
 import numpy as np
@@ -36,7 +35,7 @@ def get_master_list(release="dr3"):
     """return the master list of ZTF objects"""
     return pandas.read_csv( os.path.join(IDR_PATH, release, "tables/object_lists/master_list.csv") ).set_index("ztfname")
 
-def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="20260423"):
+def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version=""):
     """Return the SALT data for a given release and parameters.
 
     Parameters
@@ -57,7 +56,10 @@ def get_saltdata(release="dr3", which="salt2-T21", bands="gri", version="2026042
         and parameters.
     """
     pathsalt_dir = os.path.join(IDR_PATH, release, "tables/saltfit")
-    basename = f"ztf{release}_{which}params_{bands}_{version}.csv"
+    if version is None or version == "":
+        basename = f"ztf{release}_{which}params_{bands}.csv"
+    else:
+        basename = f"ztf{release}_{which}params_{bands}_{version}.csv"
     return pandas.read_csv(os.path.join(pathsalt_dir, basename)).set_index("ztfname")
 
 def get_target_saltdata(name, which="salt2-T21", **kwargs):
