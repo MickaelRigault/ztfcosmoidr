@@ -1,5 +1,4 @@
 """access ztf dr3 internal data-release"""
-
 import os
 import warnings
 import numpy as np
