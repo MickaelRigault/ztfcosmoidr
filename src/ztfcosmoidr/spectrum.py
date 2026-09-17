@@ -1,6 +1,7 @@
 import os
 import pandas
 import numpy as np
+import warnings
 
 from .io import IDR_PATH
 
@@ -41,8 +42,39 @@ def read_standardized_specfile(filepath):
 
     return data, header
 
+def fetch_snidresult_of_filename(filename, warn_if_notexist=True):
+    """ Fetch the SNID result associated with a given spectrum filename.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the spectrum file. The associated SNID result file is
+        assumed to be named identically but with the extension replaced
+        by '_snid.h5'.
+    warn_if_notexist : bool, optional
+        If True (default), a warning is raised if the SNID result file
+        does not exist.
+
+    Returns
+    -------
+    pysnid.snid.SNIDReader or None
+        The SNID result reader object if the file exists, otherwise None.
+    """
+    extention = os.path.splitext(filename)[1]
+    snidresult_file = filename.replace(f"{extention}","_snid.h5")
+    if not os.path.isfile(snidresult_file):
+        if warn_if_notexist:
+            warnings.warn(f"snidres file does not exists {snidresult_file}")
+
+        return None
+
+    from pysnid.snid import SNIDReader
+    return SNIDReader.from_filename(snidresult_file)
+
+
 class Spectrum:
-    def __init__(self, data, header, filename=None):
+    def __init__(self, data, header, filename=None,
+                snidresult=None):
         """Initialize a Spectrum object.
 
         Parameters
@@ -53,10 +85,47 @@ class Spectrum:
             Dictionary containing header information from the spectrum file.
         filename : str, optional
             Path to the spectrum file.
+        snidresult : pysnid.snid.SNIDReader, optional
+            SNID result reader object associated with the spectrum, if available.
         """
         self._data = data
         self._header = header
         self._filename = filename
+        self._snidresult = snidresult
+
+    @classmethod
+    def from_name(cls, name, release="dr3"):
+        """Create a Spectrum object from a target name.
+
+        Parameters
+        ----------
+        name : str
+            Target name to locate the spectrum file.
+        release : str, optional
+            Release name to locate the file in the IDR_PATH directory structure.
+            If provided, the file is searched in IDR_PATH/release/spectra/.
+
+        Returns
+        -------
+        Spectrum
+            A new Spectrum instance initialized with data and header from the file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the spectrum file for the given target name is not found.
+        """
+        from .io import get_spec_datafile
+        specfile = get_spec_datafile(contains=name, release=release)
+        if len(specfile) == 0:
+            raise FileNotFoundError(f"No spectra found for {name}")
+
+        # Assuming we take the first matching spectrum file for the target
+        if len(specfile) == 1:
+            return cls.from_filename(specfile.iloc[0]["basename"], release=release)
+        else:
+            warnings.warn(f"Multiple spectra found for {name}, returning a list of spectra")
+            return [cls.from_filename(specfile_.basename, release=release) for specfile_ in specfile["basename"]]
 
     @classmethod
     def from_filename(cls, filename, release=None):
@@ -94,8 +163,13 @@ class Spectrum:
             if not os.path.isfile(filename):
                 raise FileNotFoundError(f"File not found: {filename}")
 
+        # snid file if any
+        if filename is not None:
+            snidresult = fetch_snidresult_of_filename(filename, warn_if_notexist=False)
+
         data, header = read_standardized_specfile(filename)
-        return cls(data, header)
+        return cls(data, header, snidresult=snidresult, filename=filename)
+
 
     # =============== #
     #   Methods       #
@@ -161,6 +235,7 @@ class Spectrum:
         ax.set_xlabel("wavelength", fontsize="large")
         ax.set_ylabel("flux", fontsize="large")
         return fig
+
     # =============== #
     #    Properties   #
     # =============== #
@@ -196,6 +271,17 @@ class Spectrum:
             Path to the spectrum file, or None if not available.
         """
         return self._filename
+
+    @property
+    def snidresult(self):
+        """Get the SNID result associated with the spectrum.
+
+        Returns
+        -------
+        pysnid.snid.SNIDReader or None
+            SNID result reader object if available, otherwise None.
+        """
+        return self._snidresult
 
     @property
     def lbda(self):
@@ -271,7 +357,6 @@ class Spectrum:
             return float(exposure)
 
         return None
-
 
     @property
     def instrument(self):
