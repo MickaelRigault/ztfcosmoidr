@@ -533,7 +533,7 @@ class LightCurve():
                 else:
                     ax.set_xlim(*Time(timerange,format="mjd").datetime)
 
-            if not inmag:
+            if not inmag and not (np.isinf(max_saltlc) or np.isnan(max_saltlc)):
                 ax.set_ylim(bottom=-max_saltlc*0.25)
                 ax.set_ylim(top=max_saltlc*1.25)
             else:
